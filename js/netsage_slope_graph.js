@@ -2028,7 +2028,7 @@ let counter = 0;
 for (i in top_10_pairs) {
     let new_org = top_10_pairs[i].source;
     let added = false;
-    top_10_pairs[i].coords = [{"x": 0},{"x":1}]
+    top_10_pairs[i].coords = [{ "x": 0 }, { "x": 1 }]
     for (j in source_orgs) {
         if (source_orgs[j] == new_org) {
             added = true;
@@ -2122,7 +2122,7 @@ svg.append("g")
 // width scale
 var w = d3.scaleLinear()
     .domain([top_10_pairs[top_10_pairs.length - 1].value, top_10_pairs[0].value])
-    .range([1,5])
+    .range([1, 10])
 
 
 // Add the lines
@@ -2130,11 +2130,26 @@ for (i in top_10_pairs) {
     svg.append("path")
         .datum(top_10_pairs[i].coords)
         .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", w(top_10_pairs[i].value) )
+        .attr("stroke", () => {
+            var alpha = w(top_10_pairs[i].value) / 5;
+            var color = "rgba(51, 102, 255," + alpha + ")";
+            return color;
+        })
+        .attr("stroke-width", w(top_10_pairs[i].value))
         .attr("d", d3.line()
             .x(function (d) { return x(d.x) })
             .y(function (d) { return y(d.y) }))
+        .on("mouseover", function () {
+            console.log(this);
+            d3.select(this).attr("stroke", "black");
+        })
+        .on("mouseout", function() {
+            d3.select(this).attr("stroke", () => {
+                var alpha = d3.select(this).attr("stroke-width") / 5;
+                var color = "rgba(51, 102, 255," + alpha + ")";
+                return color;
+            })
+        })
 }
 
 
