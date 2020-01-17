@@ -2141,7 +2141,7 @@ for (i in top_10_pairs) {
             .y(function (d) { return y(d.y) }))
         .on("mouseover", function () {
             console.log(this);
-            d3.select(this).attr("stroke", "black");
+            d3.select(this).attr("stroke", "darkblue");
         })
         .on("mouseout", function() {
             d3.select(this).attr("stroke", () => {
