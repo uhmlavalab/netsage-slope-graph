@@ -2028,7 +2028,9 @@ let counter = 0;
 for (i in top_10_pairs) {
     let new_org = top_10_pairs[i].source;
     let added = false;
-    top_10_pairs[i].coords = [{ "x": 0 }, { "x": 1 }]
+    top_10_pairs[i].coords = [
+        { "x": 0 , "value": top_10_pairs[i].value }, 
+        { "x": 1 }]
     for (j in source_orgs) {
         if (source_orgs[j] == new_org) {
             added = true;
@@ -2084,7 +2086,7 @@ console.log(top_10_pairs)
 
 
 // set the dimensions and margins of the graph
-var margin = { top: 50, right: 30, bottom: 30, left: 60 },
+var margin = { top: 50, right: 200, bottom: 30, left: 200 },
     width = 1000 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -2098,7 +2100,30 @@ var svg = d3.select("#chart-area")
         "translate(" + margin.left + "," + margin.top + ")");
 
 
-
+ // function to wrap text!
+function wrap(text, width) {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            y = text.attr("y"),
+            dy = parseFloat(text.attr("dy")),
+            tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+            }
+        }
+    });
+}
 
 // Add X scale
 var x = d3.scaleLinear()
@@ -2111,11 +2136,40 @@ var y = d3.scaleLinear()
     .domain([0, 9])
     .range([0, height])
 
-svg.append("g")
-    .call(d3.axisLeft(y));
+var leftAxis = d3.axisLeft(y)
+    .tickSize(5)
+    .tickFormat((d) => {
+        return source_orgs[d]
+    })
+
+var rightAxis = d3.axisRight(y)
+    .tickSize(5)
+    .tickFormat((d) => {
+        return dest_orgs[d]
+    })
+
+svg.append("g").call(leftAxis)
+    .attr("margin", 10)
+    .selectAll(".tick text")
+    .call(wrap, 150)
+    .attr("transform", "translate(" + -10 + ",0)")
+
 svg.append("g")
     .attr("transform", "translate(" + width + ",0)")
-    .call(d3.axisRight(y));
+    .call(rightAxis)
+    .attr("class", "axis")
+    .selectAll(".tick text")
+    .call(wrap, 150)
+    .attr("transform", "translate(" + 10 + ",0)")
+
+
+// svg.append("g")
+//     .call(d3.axisLeft(y));
+// svg.append("g")
+//     .attr("transform", "translate(" + width + ",0)")
+//     .call(d3.axisRight(y));
+
+
 
 
 
@@ -2124,9 +2178,15 @@ var w = d3.scaleLinear()
     .domain([top_10_pairs[top_10_pairs.length - 1].value, top_10_pairs[0].value])
     .range([1, 10])
 
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
 
 // Add the lines
 for (i in top_10_pairs) {
+    var value = top_10_pairs[i].value;
+
     svg.append("path")
         .datum(top_10_pairs[i].coords)
         .attr("fill", "none")
@@ -2139,17 +2199,43 @@ for (i in top_10_pairs) {
         .attr("d", d3.line()
             .x(function (d) { return x(d.x) })
             .y(function (d) { return y(d.y) }))
-        .on("mouseover", function () {
+        .on("mouseover", function (d) {
             console.log(this);
             d3.select(this).attr("stroke", "darkblue");
+            div.transition()
+                .duration(200)
+                .style("opacity", .9);
+            div.html(()=>{
+                var value = d[0].value;
+                value = value/8000
+                if (value < 1000) {
+                    return value.toFixed(1) + "KB";
+                } else {
+                    value = value / 1000;
+                    if (value < 1000) {
+                        return value.toFixed(1) + "MB"
+                    } else {
+                        value = value / 1000;
+                        if (value < 1000) {
+                            return value.toFixed(1) + "GB"
+                        } else {
+                            value = value / 1000;
+                            return value.toFixed(1) + "TB"
+                        }
+                    }
+                }
+            })
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px")	
         })
         .on("mouseout", function() {
+            div.transition()
+                .duration(500)
+                .style("opacity", 0);	
             d3.select(this).attr("stroke", () => {
                 var alpha = d3.select(this).attr("stroke-width") / 5;
                 var color = "rgba(51, 102, 255," + alpha + ")";
                 return color;
             })
         })
-}
-
-
+    }
