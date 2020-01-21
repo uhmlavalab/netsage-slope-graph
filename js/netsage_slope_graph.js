@@ -2026,7 +2026,7 @@ let source_orgs = [];
 let source_encoding = [];
 let counter = 0;
 for (i in top_10_pairs) {
-    let new_org = top_10_pairs[i].source;
+    let new_org = top_10_pairs[i][0];
     let added = false;
     top_10_pairs[i].coords = [
         { "x": 0 , "value": top_10_pairs[i].value }, 
@@ -2056,7 +2056,7 @@ let dest_orgs = [];
 let dest_encoding = [];
 counter = 0;
 for (i in top_10_pairs) {
-    let new_org = top_10_pairs[i].dest;
+    let new_org = top_10_pairs[i][1];
     let added = false;
     for (j in dest_orgs) {
         if (dest_orgs[j] == new_org) {
@@ -2175,7 +2175,7 @@ svg.append("g")
 
 // width scale
 var w = d3.scaleLinear()
-    .domain([top_10_pairs[top_10_pairs.length - 1].value, top_10_pairs[0].value])
+    .domain([top_10_pairs[top_10_pairs.length - 1][2], top_10_pairs[0][2]])
     .range([1, 10])
 
 var div = d3.select("body").append("div")
@@ -2185,17 +2185,17 @@ var div = d3.select("body").append("div")
 
 // Add the lines
 for (i in top_10_pairs) {
-    var value = top_10_pairs[i].value;
+    var value = top_10_pairs[i][2];
 
     svg.append("path")
         .datum(top_10_pairs[i].coords)
         .attr("fill", "none")
         .attr("stroke", () => {
-            var alpha = w(top_10_pairs[i].value) / 5;
+            var alpha = w(top_10_pairs[i][2]) / 5;
             var color = "rgba(51, 102, 255," + alpha + ")";
             return color;
         })
-        .attr("stroke-width", w(top_10_pairs[i].value))
+        .attr("stroke-width", w(top_10_pairs[i][2]))
         .attr("d", d3.line()
             .x(function (d) { return x(d.x) })
             .y(function (d) { return y(d.y) }))
